@@ -1,7 +1,7 @@
 package com.example.chapter5
 
-import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
+import org.apache.spark.SparkContext
 
 object WordCount {
 
