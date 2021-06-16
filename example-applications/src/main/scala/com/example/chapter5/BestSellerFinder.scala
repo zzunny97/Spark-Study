@@ -30,10 +30,10 @@ object BestSellerFinder {
   }
 
   /** 각 달의 판매실적 데이터를 갖고 있는 RDD로부터
-    * 200개 이상 팔린 상품의 정보만을 갖는 RDD를 생성하는 메서드
+    * 50개 이상 팔린 상품의 정보만을 갖는 RDD를 생성하는 메서드
     */
-  private def createOver200SoldRDD(rdd: RDD[(String, Int)]) = {
-    rdd.reduceByKey(_ + _).filter(_._2 >= 200)
+  private def createOver50SoldRDD(rdd: RDD[(String, Int)]) = {
+    rdd.reduceByKey(_ + _).filter(_._2 >= 50)
   }
 
   /** 상품의 마스터 데이터를 갖는 HashMap을 생성하는 메서드
@@ -69,7 +69,7 @@ object BestSellerFinder {
   }
 
   /** 상품의 마스터 데이터와 결합해서
-    * 두 달 연속 200개 이상 판매된 상품 정보를 갖는 RDD를 생성하는 메서드
+    * 두 달 연속 50개 이상 판매된 상품 정보를 갖는 RDD를 생성하는 메서드
     */
   private def createResultRDD(
       // broadcastedMap: Broadcast[HashMap[String, (String, Int)]],
@@ -104,17 +104,17 @@ object BestSellerFinder {
 
       // (상품ID, 판매량) 형의 튜플을 요소로 갖는 RDD로부터
       // (상품ID, 총판매량) 형의 튜플을 요소로 갖는 RDD를 생성한다.
-      val over200SoldRDD1 = createOver200SoldRDD(salesRDD1)
-      val over200SoldRDD2 = createOver200SoldRDD(salesRDD2)
+      val over50SoldRDD1 = createOver50SoldRDD(salesRDD1)
+      val over50SoldRDD2 = createOver50SoldRDD(salesRDD2)
 
-      // 두 달 연속으로 200개 이상 판매된 상품에 대해서
+      // 두 달 연속으로 50개 이상 판매된 상품에 대해서
       // (상품ID, 두 달 간의 총판매량) 형의 튜플을 요소로 갖는 RDD를 생성한다.
-      val bothOver200SoldRDD = over200SoldRDD1.join(over200SoldRDD2)
-      val over200SoldAndAmountRDD = bothOver200SoldRDD.map {
+      val bothOver50SoldRDD = over50SoldRDD1.join(over50SoldRDD2)
+      val over50SoldAndAmountRDD = bothOver50SoldRDD.map {
         case (productId, (amount1, amount2)) =>
           (productId, amount1 + amount2)
       }
-      over200SoldAndAmountRDD.collect().foreach(println)
+      over50SoldAndAmountRDD.collect().foreach(println)
 
       // 상품의 마스터 데이터를 HashMap에 로드하고
       // 브로드캐스트 변수로 이그제큐터에 배포한다.
@@ -123,7 +123,7 @@ object BestSellerFinder {
 
       // 결과를 계산해 파일시스템이 출력한다.
       val resultRDD =
-        createResultRDD(broadcastedMap, over200SoldAndAmountRDD)
+        createResultRDD(broadcastedMap, over50SoldAndAmountRDD)
       resultRDD.saveAsTextFile(outputPath)
 
     } finally {
